@@ -1,0 +1,19 @@
+---
+project_name: gh-release-report
+before:
+  hooks:
+    - make test
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+      - windows
+      - netbsd
+    main: ./cmd/main.go
+archives:
+  - name_template: "{{ .Os }}-{{ .Arch }}"
+    format: binary
+snapshot:
+  name_template: "{{ .Version }}-next"
