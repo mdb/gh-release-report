@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/MakeNowJust/heredoc"
+	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
 	gh "github.com/cli/go-gh"
 	"github.com/spf13/cobra"
 )
@@ -28,15 +29,13 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			response := struct {
-				Name string
-			}{}
+			var response shared.Release
 			err = client.Get(fmt.Sprintf("repos/%s/%s/releases/latest", repo.Owner, repo.Name), &response)
 			if err != nil {
 				return err
 			}
 
-			fmt.Println(response.Name)
+			fmt.Println(response)
 			return nil
 		},
 	}
