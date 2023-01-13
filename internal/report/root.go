@@ -2,10 +2,12 @@ package report
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/MakeNowJust/heredoc"
 	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
 	gh "github.com/cli/go-gh"
+	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 )
 
@@ -35,8 +37,22 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(response)
-			return nil
+			total := 0
+			bars := pterm.Bars{}
+			for _, asset := range response.Assets {
+				if strings.Contains(asset.Name, "checksums") {
+					continue
+				}
+
+				total += asset.DownloadCount
+				bars = append(bars, pterm.Bar{
+					Label: asset.Name,
+					Value: asset.DownloadCount,
+				})
+			}
+
+			pterm.DefaultBasicText.Println(fmt.Sprintf("%d total downloads", total))
+			return pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Render()
 		},
 	}
 
