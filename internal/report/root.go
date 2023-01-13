@@ -18,8 +18,25 @@ func NewCmdRoot(version string) *cobra.Command {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			r, _ := cmd.Flags().GetString("repo")
-			fmt.Println(r)
+			repo, err := getRepoOption(cmd)
+			if err != nil {
+				return err
+			}
+
+			client, err := gh.RESTClient(nil)
+			if err != nil {
+				return err
+			}
+
+			response := struct {
+				Name string
+			}{}
+			err = client.Get(fmt.Sprintf("repos/%s/%s/releases/latest", repo.Owner, repo.Name), &response)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(response.Name)
 			return nil
 		},
 	}
