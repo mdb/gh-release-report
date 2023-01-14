@@ -9,6 +9,8 @@ import (
 	gh "github.com/cli/go-gh"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func NewCmdRoot(version string) *cobra.Command {
@@ -51,8 +53,19 @@ func NewCmdRoot(version string) *cobra.Command {
 				})
 			}
 
-			pterm.DefaultBasicText.Println(fmt.Sprintf("%d total downloads", total))
-			return pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Render()
+			chart, err := pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Srender()
+			if err != nil {
+				return err
+			}
+
+			title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
+			p := message.NewPrinter(language.English)
+			totalDs := p.Sprintf("%d downloads", total)
+			published := fmt.Sprintf("Published %s", response.PublishedAt)
+
+			pterm.DefaultBox.WithTitle(title).Println("\n" + published + "\n" + response.URL + "\n" + chart + "\n" + totalDs)
+
+			return nil
 		},
 	}
 
