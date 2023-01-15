@@ -72,12 +72,17 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
+			if len(response.Assets) == 0 {
+				chart = "No release assets\n"
+			}
+
 			title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
 			p := message.NewPrinter(language.English)
 			formattedTotal := p.Sprintf("%d", total)
+			emphasized := pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold)
 
 			contents := []string{
-				pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln(title),
+				emphasized.Sprintln(title),
 				fmt.Sprintf("Published %s", response.PublishedAt),
 				pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
 				chart,
