@@ -26,7 +26,10 @@ func NewCmdRoot(version string) *cobra.Command {
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			tag, _ := cmd.Flags().GetString("tag")
+			tag, err := cmd.Flags().GetString("tag")
+			if err != nil {
+				return err
+			}
 
 			repo, err := getRepoOption(cmd)
 			if err != nil {
@@ -70,10 +73,18 @@ func NewCmdRoot(version string) *cobra.Command {
 
 			title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
 			p := message.NewPrinter(language.English)
-			totalDs := p.Sprintf("%d downloads", total)
-			published := fmt.Sprintf("Published %s", response.PublishedAt)
+			formattedTotal := p.Sprintf("%d", total)
+			totalDs := pterm.LightMagenta(formattedTotal) + " downloads"
 
-			pterm.DefaultBox.WithTitle(title).Println("\n" + published + "\n" + response.URL + "\n" + chart + "\n" + totalDs)
+			contents := []string{
+				pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln(title),
+				fmt.Sprintf("Published %s", response.PublishedAt),
+				pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
+				chart,
+				totalDs,
+			}
+
+			pterm.DefaultBox.Println(strings.Join(contents, "\n"))
 
 			return nil
 		},
