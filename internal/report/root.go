@@ -16,16 +16,26 @@ import (
 func NewCmdRoot(version string) *cobra.Command {
 	rootCmd := &cobra.Command{
 		Use:   "gh release-report",
-		Short: "TODO",
+		Short: "How many times has a GitHub release been downloaded?",
 		Long: heredoc.Doc(`
-			TODO
+			How many times has a GitHub release been downloaded?
+
+			gh release-report reports a release's total download count, as well
+			as the individual download count for each of its assets.
 		`),
 		SilenceUsage: true,
 		Version:      version,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			tag, _ := cmd.Flags().GetString("tag")
+
 			repo, err := getRepoOption(cmd)
 			if err != nil {
 				return err
+			}
+
+			url := fmt.Sprintf("repos/%s/releases/latest", repo.RepoFullName())
+			if tag != "latest" {
+				url = fmt.Sprintf("repos/%s/releases/tags/%s", repo.RepoFullName(), tag)
 			}
 
 			client, err := gh.RESTClient(nil)
@@ -34,7 +44,7 @@ func NewCmdRoot(version string) *cobra.Command {
 			}
 
 			var response shared.Release
-			err = client.Get(fmt.Sprintf("repos/%s/%s/releases/latest", repo.Owner, repo.Name), &response)
+			err = client.Get(url, &response)
 			if err != nil {
 				return err
 			}
@@ -42,7 +52,7 @@ func NewCmdRoot(version string) *cobra.Command {
 			total := 0
 			bars := pterm.Bars{}
 			for _, asset := range response.Assets {
-				if strings.Contains(asset.Name, "checksums") {
+				if strings.Contains(strings.ToLower(asset.Name), "checksums") || strings.Contains(strings.ToLower(asset.Name), "sha256sums") {
 					continue
 				}
 
@@ -77,6 +87,8 @@ func NewCmdRoot(version string) *cobra.Command {
 
 	var repo string
 	rootCmd.PersistentFlags().StringVarP(&repo, "repo", "R", defaultRepo, "The targeted repository's full name")
+	var tag string
+	rootCmd.PersistentFlags().StringVarP(&tag, "tag", "T", "latest", "The release tag")
 
 	return rootCmd
 }
