@@ -55,6 +55,7 @@ func NewCmdRoot(version string) *cobra.Command {
 			total := 0
 			bars := pterm.Bars{}
 			for _, asset := range response.Assets {
+				// TODO: make --exclude a configurable option
 				if strings.Contains(strings.ToLower(asset.Name), "checksums") || strings.Contains(strings.ToLower(asset.Name), "sha256sums") {
 					continue
 				}
@@ -74,14 +75,13 @@ func NewCmdRoot(version string) *cobra.Command {
 			title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
 			p := message.NewPrinter(language.English)
 			formattedTotal := p.Sprintf("%d", total)
-			totalDs := pterm.LightMagenta(formattedTotal) + " downloads"
 
 			contents := []string{
 				pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln(title),
 				fmt.Sprintf("Published %s", response.PublishedAt),
 				pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
 				chart,
-				totalDs,
+				pterm.LightMagenta(formattedTotal) + " downloads",
 			}
 
 			pterm.DefaultBox.Println(strings.Join(contents, "\n"))
