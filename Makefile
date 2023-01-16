@@ -56,3 +56,7 @@ install:
 	mkdir -p ~/.local/share/gh/extensions/$(NAME)
 	cp dist/$(NAME)_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64*/$(NAME) ~/.local/share/gh/extensions/$(NAME)/
 .PHONY: install
+
+demo:
+	vhs < demo.tape
+.PHONY: demo

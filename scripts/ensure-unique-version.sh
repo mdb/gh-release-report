@@ -14,4 +14,5 @@ if [ "${result}" = "404" ]; then
 fi
 
 echo "${version} is an existing ${repo} release"
+
 exit 1
