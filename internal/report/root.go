@@ -2,9 +2,11 @@ package report
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc"
+	cliapi "github.com/cli/cli/v2/api"
 	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
 	gh "github.com/cli/go-gh"
 	"github.com/pterm/pterm"
@@ -36,10 +38,22 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			return Run(&RunOptions{
-				Repo: repo,
-				Tag:  tag,
+			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
+				Config: &Config{},
 			})
+
+			contents, err := Run(&RunOptions{
+				Repo:       repo,
+				Tag:        tag,
+				HTTPClient: ghClient,
+			})
+			if err != nil {
+				return err
+			}
+
+			pterm.DefaultBox.Println(contents)
+
+			return nil
 		},
 	}
 
@@ -51,6 +65,7 @@ func NewCmdRoot(version string) *cobra.Command {
 
 	var repo string
 	rootCmd.PersistentFlags().StringVarP(&repo, "repo", "R", defaultRepo, "The targeted repository's full name")
+
 	var tag string
 	rootCmd.PersistentFlags().StringVarP(&tag, "tag", "T", "latest", "The release tag")
 
@@ -58,27 +73,27 @@ func NewCmdRoot(version string) *cobra.Command {
 }
 
 type RunOptions struct {
-	Repo *ghRepo
-	Tag  string
+	Repo       *ghRepo
+	Tag        string
+	HTTPClient *http.Client
 }
 
-func Run(opts *RunOptions) error {
+func Run(opts *RunOptions) (string, error) {
 	repo := opts.Repo
-	tag := opts.Tag
-	url := fmt.Sprintf("repos/%s/releases/latest", repo.RepoFullName())
-	if tag != "latest" {
+	var url string
+
+	switch tag := opts.Tag; tag {
+	case "latest":
+		url = fmt.Sprintf("repos/%s/releases/latest", repo.RepoFullName())
+	default:
 		url = fmt.Sprintf("repos/%s/releases/tags/%s", repo.RepoFullName(), tag)
 	}
 
-	client, err := gh.RESTClient(nil)
-	if err != nil {
-		return err
-	}
-
+	ghClient := cliapi.NewClientFromHTTP(opts.HTTPClient)
 	var response shared.Release
-	err = client.Get(url, &response)
+	err := ghClient.REST(repo.RepoHost(), "GET", url, nil, &response)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	total := 0
@@ -98,7 +113,7 @@ func Run(opts *RunOptions) error {
 
 	chart, err := pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Srender()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if len(response.Assets) == 0 {
@@ -110,15 +125,11 @@ func Run(opts *RunOptions) error {
 	formattedTotal := p.Sprintf("%d", total)
 	emphasized := pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold)
 
-	contents := []string{
+	return strings.Join([]string{
 		emphasized.Sprintln(title),
 		fmt.Sprintf("Published %s", response.PublishedAt),
 		pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
 		chart,
 		pterm.LightMagenta(formattedTotal) + " downloads",
-	}
-
-	pterm.DefaultBox.Println(strings.Join(contents, "\n"))
-
-	return nil
+	}, "\n"), nil
 }

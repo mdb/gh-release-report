@@ -20,6 +20,6 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func TestRootAcceptance(t *testing.T) {
+func TestAcceptance(t *testing.T) {
 
 }
