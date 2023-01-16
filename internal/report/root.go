@@ -36,62 +36,10 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			url := fmt.Sprintf("repos/%s/releases/latest", repo.RepoFullName())
-			if tag != "latest" {
-				url = fmt.Sprintf("repos/%s/releases/tags/%s", repo.RepoFullName(), tag)
-			}
-
-			client, err := gh.RESTClient(nil)
-			if err != nil {
-				return err
-			}
-
-			var response shared.Release
-			err = client.Get(url, &response)
-			if err != nil {
-				return err
-			}
-
-			total := 0
-			bars := pterm.Bars{}
-			for _, asset := range response.Assets {
-				// TODO: make --exclude a configurable option
-				if strings.Contains(strings.ToLower(asset.Name), "checksums") || strings.Contains(strings.ToLower(asset.Name), "sha256sums") {
-					continue
-				}
-
-				total += asset.DownloadCount
-				bars = append(bars, pterm.Bar{
-					Label: asset.Name,
-					Value: asset.DownloadCount,
-				})
-			}
-
-			chart, err := pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Srender()
-			if err != nil {
-				return err
-			}
-
-			if len(response.Assets) == 0 {
-				chart = "No release assets\n"
-			}
-
-			title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
-			p := message.NewPrinter(language.English)
-			formattedTotal := p.Sprintf("%d", total)
-			emphasized := pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold)
-
-			contents := []string{
-				emphasized.Sprintln(title),
-				fmt.Sprintf("Published %s", response.PublishedAt),
-				pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
-				chart,
-				pterm.LightMagenta(formattedTotal) + " downloads",
-			}
-
-			pterm.DefaultBox.Println(strings.Join(contents, "\n"))
-
-			return nil
+			return Run(&RunOptions{
+				Repo: repo,
+				Tag:  tag,
+			})
 		},
 	}
 
@@ -107,4 +55,70 @@ func NewCmdRoot(version string) *cobra.Command {
 	rootCmd.PersistentFlags().StringVarP(&tag, "tag", "T", "latest", "The release tag")
 
 	return rootCmd
+}
+
+type RunOptions struct {
+	Repo *ghRepo
+	Tag  string
+}
+
+func Run(opts *RunOptions) error {
+	repo := opts.Repo
+	tag := opts.Tag
+	url := fmt.Sprintf("repos/%s/releases/latest", repo.RepoFullName())
+	if tag != "latest" {
+		url = fmt.Sprintf("repos/%s/releases/tags/%s", repo.RepoFullName(), tag)
+	}
+
+	client, err := gh.RESTClient(nil)
+	if err != nil {
+		return err
+	}
+
+	var response shared.Release
+	err = client.Get(url, &response)
+	if err != nil {
+		return err
+	}
+
+	total := 0
+	bars := pterm.Bars{}
+	for _, asset := range response.Assets {
+		// TODO: make --exclude a configurable option
+		if strings.Contains(strings.ToLower(asset.Name), "checksums") || strings.Contains(strings.ToLower(asset.Name), "sha256sums") {
+			continue
+		}
+
+		total += asset.DownloadCount
+		bars = append(bars, pterm.Bar{
+			Label: asset.Name,
+			Value: asset.DownloadCount,
+		})
+	}
+
+	chart, err := pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Srender()
+	if err != nil {
+		return err
+	}
+
+	if len(response.Assets) == 0 {
+		chart = "No release assets\n"
+	}
+
+	title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
+	p := message.NewPrinter(language.English)
+	formattedTotal := p.Sprintf("%d", total)
+	emphasized := pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold)
+
+	contents := []string{
+		emphasized.Sprintln(title),
+		fmt.Sprintf("Published %s", response.PublishedAt),
+		pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
+		chart,
+		pterm.LightMagenta(formattedTotal) + " downloads",
+	}
+
+	pterm.DefaultBox.Println(strings.Join(contents, "\n"))
+
+	return nil
 }
