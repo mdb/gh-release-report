@@ -43,8 +43,8 @@
 Output demo.gif
 
 Set FontSize 18
-Set Width 2000
-Set Height 2000
+Set Width 1800
+Set Height 800
 
 Type 'gh release-report --repo cli/cli'
 
@@ -52,4 +52,4 @@ Sleep 2s
 
 Enter
 
-Sleep 15s
+Sleep 18s
