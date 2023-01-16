@@ -51,7 +51,7 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			pterm.DefaultBox.Println(contents)
+			pterm.DefaultBox.Println(strings.Join(contents, "\n"))
 
 			return nil
 		},
@@ -78,7 +78,7 @@ type RunOptions struct {
 	HTTPClient *http.Client
 }
 
-func Run(opts *RunOptions) (string, error) {
+func Run(opts *RunOptions) ([]string, error) {
 	repo := opts.Repo
 	var url string
 
@@ -93,7 +93,7 @@ func Run(opts *RunOptions) (string, error) {
 	var response shared.Release
 	err := ghClient.REST(repo.RepoHost(), "GET", url, nil, &response)
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 
 	total := 0
@@ -113,7 +113,7 @@ func Run(opts *RunOptions) (string, error) {
 
 	chart, err := pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Srender()
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 
 	if len(response.Assets) == 0 {
@@ -125,11 +125,11 @@ func Run(opts *RunOptions) (string, error) {
 	formattedTotal := p.Sprintf("%d", total)
 	emphasized := pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold)
 
-	return strings.Join([]string{
+	return []string{
 		emphasized.Sprintln(title),
 		fmt.Sprintf("Published %s", response.PublishedAt),
 		pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
 		chart,
 		pterm.LightMagenta(formattedTotal) + " downloads",
-	}, "\n"), nil
+	}, nil
 }

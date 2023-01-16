@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"net/http"
+	"reflect"
 	"strings"
 	"testing"
 
 	"github.com/cli/cli/v2/pkg/httpmock"
+	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -43,34 +45,37 @@ func TestRun(t *testing.T) {
 		httpStubs func(*httpmock.Registry)
 		wantErr   bool
 		errMsg    string
-		wantOut   string
+		want      []string
 	}{{
-		name: "when the release has no assets or known publication date",
+		name: "empty response body from GitHub API",
 		httpStubs: func(reg *httpmock.Registry) {
 			createMockRegistry(reg, `{}`)
 		},
-		wantOut: "\x1b[95;40;1m\x1b[95;40;1mOWNER/REPO \x1b[0m\x1b[0m\n\nPublished <nil>\n\x1b[34;1;4m\x1b[34;1;4m\x1b[0m\x1b[0m\n\nNo release assets\n\n\x1b[95m0\x1b[0m downloads",
+		want: []string{
+			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO "),
+			"Published <nil>",
+			"\x1b[34;1;4m\x1b[34;1;4m\x1b[0m\x1b[0m\n",
+			"No release assets\n",
+			"\x1b[95m0\x1b[0m downloads",
+		},
 	}, {
-		name: "when the release has assets",
+		name: "when the release has no assets",
 		httpStubs: func(reg *httpmock.Registry) {
 			createMockRegistry(reg, `{
 				"html_url": "https://github.com/FOO/BAR/releases/v1.0.0",
 				"tag_name": "v1.0.0",
 				"name": "v1.0.0",
 				"published_at": "2013-02-27T19:35:32Z",
-				"assets": [
-					{
-						"name": "example.zip",
-						"download_count": 42
-					},
-					{
-						"name": "example.tar.gz",
-						"download_count": 100
-					}
-				]
+				"assets": []
 			}`)
 		},
-		wantOut: "\x1b[95;40;1m\x1b[95;40;1mOWNER/REPO v1.0.0\x1b[0m\x1b[0m\n\nPublished 2013-02-27 19:35:32 +0000 UTC\n\x1b[34;1;4m\x1b[34;1;4mhttps://github.com/FOO/BAR/releases/v1.0.0\x1b[0m\x1b[0m\n\n\x1b[0m\x1b[0m               \x1b[0m\x1b[0m                                                           \n\x1b[96m\x1b[96mexample.zip\x1b[0m\x1b[0m\x1b[0m\x1b[0m    \x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m                                 42\x1b[0m\x1b[0m  \n\x1b[96m\x1b[96mexample.tar.gz\x1b[0m\x1b[0m \x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m   100 \n\n\x1b[95m142\x1b[0m downloads",
+		want: []string{
+			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO v1.0.0"),
+			"Published 2013-02-27 19:35:32 +0000 UTC",
+			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln("https://github.com/FOO/BAR/releases/v1.0.0"),
+			"No release assets\n",
+			"\x1b[95m0\x1b[0m downloads",
+		},
 	}}
 
 	for _, tt := range tests {
@@ -92,8 +97,8 @@ func TestRun(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			if got != tt.wantOut {
-				t.Errorf("got:\n%q\nwant:\n%q", got, tt.wantOut)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("got:\n%q\nwant:\n%q", got, tt.want)
 			}
 
 			reg.Verify(t)
