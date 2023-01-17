@@ -54,9 +54,9 @@ func TestRun(t *testing.T) {
 		want: []string{
 			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO "),
 			"Published <nil>",
-			"\x1b[34;1;4m\x1b[34;1;4m\x1b[0m\x1b[0m\n",
+			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(""),
 			"No release assets\n",
-			"\x1b[95m0\x1b[0m downloads",
+			pterm.LightMagenta("0") + " downloads",
 		},
 	}, {
 		name: "when the release has no assets",
@@ -74,7 +74,7 @@ func TestRun(t *testing.T) {
 			"Published 2013-02-27 19:35:32 +0000 UTC",
 			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln("https://github.com/FOO/BAR/releases/v1.0.0"),
 			"No release assets\n",
-			"\x1b[95m0\x1b[0m downloads",
+			pterm.LightMagenta("0") + " downloads",
 		},
 	}}
 
