@@ -1,32 +1,15 @@
 package report
 
 import (
-	"bytes"
 	"fmt"
 	"net/http"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/cli/cli/v2/pkg/httpmock"
 	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
-
-func execute(t *testing.T, args string) string {
-	t.Helper()
-
-	cmd := NewCmdRoot("test")
-
-	actual := new(bytes.Buffer)
-
-	cmd.SetOut(actual)
-	cmd.SetErr(actual)
-	cmd.SetArgs(strings.Split(args, " "))
-	cmd.Execute()
-
-	return actual.String()
-}
 
 func TestRun(t *testing.T) {
 	repo := &ghRepo{
