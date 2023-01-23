@@ -20,10 +20,6 @@ test: vet fmtcheck
 	go test -v -coverprofile=coverage.out -count=1 $(SOURCE)
 .PHONY: test
 
-acc-test:
-	go test -v --tags=acceptance $(SOURCE)
-.PHONY: acceptance-test
-
 vet:
 	go vet $(SOURCE)
 .PHONY: vet
