@@ -20,8 +20,6 @@ jobs:
           go-version-file: go.mod
       - name: Build
         run: make
-      - name: Install gh release-report
-        run: make install
       - name: Ensure unique version
         run: make check-tag
 
