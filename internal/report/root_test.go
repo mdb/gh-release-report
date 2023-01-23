@@ -23,7 +23,7 @@ func TestRun(t *testing.T) {
 			"tag_name": "%s",
 			"name": "%s",
 			"published_at": "2013-02-27T19:35:32Z",
-		  "assets": [{
+			"assets": [{
 				"name": "example.zip",
 				"download_count": 10
 			}, {
