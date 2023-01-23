@@ -7,6 +7,7 @@ result="$(curl \
   --header "Accept: application/vnd.github.v3+json" \
   --write "%{http_code}" \
   --output "/dev/null" \
+  --verbose \
   "https://api.github.com/repos/${repo}/releases/tags/${version}")"
 
 if [ "${result}" = "404" ]; then
