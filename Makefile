@@ -6,6 +6,10 @@ GORELEASER=go run github.com/goreleaser/goreleaser/v2@v2.13.3
 
 default: build
 
+version:
+	@echo $(VERSION)
+.PHONY: version
+
 build:
 	$(GORELEASER) release \
 		--snapshot \
