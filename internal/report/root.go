@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MakeNowJust/heredoc"
+	"github.com/MakeNowJust/heredoc/v2"
 	cliapi "github.com/cli/cli/v2/api"
 	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
