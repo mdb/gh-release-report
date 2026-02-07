@@ -3,15 +3,14 @@ package report
 import (
 	"fmt"
 	"net/http"
-	"reflect"
 	"testing"
+	"time"
 
 	"github.com/cli/cli/v2/pkg/httpmock"
-	"github.com/pterm/pterm"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRun(t *testing.T) {
+func TestFetchRelease(t *testing.T) {
 	repo := &ghRepo{
 		Owner: "OWNER",
 		Name:  "REPO",
@@ -33,8 +32,6 @@ func TestRun(t *testing.T) {
 		}`, tag, tag, tag)
 	}
 
-	barChartStr := "\x1b[0m\x1b[0m               \x1b[0m\x1b[0m                                                          \n\x1b[96m\x1b[96mexample.zip\x1b[0m\x1b[0m\x1b[0m\x1b[0m    \x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m  10\x1b[0m\x1b[0m \n\x1b[96m\x1b[96mexampletwo.zip\x1b[0m\x1b[0m \x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m\x1b[36m\x1b[36m█\x1b[0m\x1b[0m                             5  \n"
-
 	createMockRegistry := func(reg *httpmock.Registry, tag, resp string) {
 		var url string
 		switch tag {
@@ -49,24 +46,27 @@ func TestRun(t *testing.T) {
 			httpmock.StringResponse(resp))
 	}
 
+	publishedAt := time.Date(2013, 2, 27, 19, 35, 32, 0, time.UTC)
+
 	tests := []struct {
 		name      string
 		tag       string
 		httpStubs func(*httpmock.Registry)
 		wantErr   bool
 		errMsg    string
-		want      []string
+		want      *ReleaseData
 	}{{
 		name: "empty response body from GitHub API",
 		httpStubs: func(reg *httpmock.Registry) {
 			createMockRegistry(reg, "latest", `{}`)
 		},
-		want: []string{
-			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO "),
-			"Published <nil>",
-			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(""),
-			"No release assets\n",
-			pterm.LightMagenta("0") + " downloads",
+		want: &ReleaseData{
+			RepoFullName: "OWNER/REPO",
+			TagName:      "",
+			PublishedAt:  nil,
+			URL:          "",
+			Assets:       []AssetData{},
+			TotalCount:   0,
 		},
 	}, {
 		name: "when the release has no assets",
@@ -79,24 +79,29 @@ func TestRun(t *testing.T) {
 				"assets": []
 			}`)
 		},
-		want: []string{
-			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO v1.0.0"),
-			"Published 2013-02-27 19:35:32 +0000 UTC",
-			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln("https://github.com/FOO/BAR/releases/v1.0.0"),
-			"No release assets\n",
-			pterm.LightMagenta("0") + " downloads",
+		want: &ReleaseData{
+			RepoFullName: "OWNER/REPO",
+			TagName:      "v1.0.0",
+			PublishedAt:  &publishedAt,
+			URL:          "https://github.com/FOO/BAR/releases/v1.0.0",
+			Assets:       []AssetData{},
+			TotalCount:   0,
 		},
 	}, {
 		name: "when the release has assets",
 		httpStubs: func(reg *httpmock.Registry) {
 			createMockRegistry(reg, "latest", successfulResp("v1.0.0"))
 		},
-		want: []string{
-			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO v1.0.0"),
-			"Published 2013-02-27 19:35:32 +0000 UTC",
-			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln("https://github.com/FOO/BAR/releases/v1.0.0"),
-			barChartStr,
-			pterm.LightMagenta("15") + " downloads",
+		want: &ReleaseData{
+			RepoFullName: "OWNER/REPO",
+			TagName:      "v1.0.0",
+			PublishedAt:  &publishedAt,
+			URL:          "https://github.com/FOO/BAR/releases/v1.0.0",
+			Assets: []AssetData{
+				{Name: "example.zip", DownloadCount: 10},
+				{Name: "exampletwo.zip", DownloadCount: 5},
+			},
+			TotalCount: 15,
 		},
 	}, {
 		name: "when a tag is specified",
@@ -104,12 +109,46 @@ func TestRun(t *testing.T) {
 		httpStubs: func(reg *httpmock.Registry) {
 			createMockRegistry(reg, "v2.0.0", successfulResp("v2.0.0"))
 		},
-		want: []string{
-			pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold).Sprintln("OWNER/REPO v2.0.0"),
-			"Published 2013-02-27 19:35:32 +0000 UTC",
-			pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln("https://github.com/FOO/BAR/releases/v2.0.0"),
-			barChartStr,
-			pterm.LightMagenta("15") + " downloads",
+		want: &ReleaseData{
+			RepoFullName: "OWNER/REPO",
+			TagName:      "v2.0.0",
+			PublishedAt:  &publishedAt,
+			URL:          "https://github.com/FOO/BAR/releases/v2.0.0",
+			Assets: []AssetData{
+				{Name: "example.zip", DownloadCount: 10},
+				{Name: "exampletwo.zip", DownloadCount: 5},
+			},
+			TotalCount: 15,
+		},
+	}, {
+		name: "checksums assets are excluded",
+		httpStubs: func(reg *httpmock.Registry) {
+			createMockRegistry(reg, "latest", `{
+				"html_url": "https://github.com/FOO/BAR/releases/v1.0.0",
+				"tag_name": "v1.0.0",
+				"name": "v1.0.0",
+				"published_at": "2013-02-27T19:35:32Z",
+				"assets": [{
+					"name": "example.zip",
+					"download_count": 10
+				}, {
+					"name": "checksums.txt",
+					"download_count": 100
+				}, {
+					"name": "SHA256SUMS",
+					"download_count": 50
+				}]
+			}`)
+		},
+		want: &ReleaseData{
+			RepoFullName: "OWNER/REPO",
+			TagName:      "v1.0.0",
+			PublishedAt:  &publishedAt,
+			URL:          "https://github.com/FOO/BAR/releases/v1.0.0",
+			Assets: []AssetData{
+				{Name: "example.zip", DownloadCount: 10},
+			},
+			TotalCount: 10,
 		},
 	}}
 
@@ -121,7 +160,7 @@ func TestRun(t *testing.T) {
 		}
 
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := Run(&RunOptions{
+			got, err := FetchRelease(&RunOptions{
 				Tag:  tt.tag,
 				Repo: repo,
 				HTTPClient: &http.Client{
@@ -135,11 +174,62 @@ func TestRun(t *testing.T) {
 				assert.NoError(t, err)
 			}
 
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("got:\n%q\nwant:\n%q", got, tt.want)
-			}
+			assert.Equal(t, tt.want, got)
 
 			reg.Verify(t)
+		})
+	}
+}
+
+func TestRenderBarChart(t *testing.T) {
+	tests := []struct {
+		name         string
+		assets       []AssetData
+		wantEmpty    bool
+		wantContains []string
+	}{{
+		name:      "empty assets",
+		assets:    []AssetData{},
+		wantEmpty: true,
+	}, {
+		name: "single asset",
+		assets: []AssetData{
+			{Name: "file.zip", DownloadCount: 100},
+		},
+		wantContains: []string{"file.zip", "██████████████████████████████████████████████████", "100"},
+	}, {
+		name: "multiple assets",
+		assets: []AssetData{
+			{Name: "file.zip", DownloadCount: 100},
+			{Name: "other.tar.gz", DownloadCount: 50},
+		},
+		wantContains: []string{
+			"file.zip",
+			"other.tar.gz",
+			"██████████████████████████████████████████████████", // 50 chars for max
+			"█████████████████████████",                          // 25 chars for half
+			"100",
+			"50",
+		},
+	}, {
+		name: "zero count shows no bar",
+		assets: []AssetData{
+			{Name: "file.zip", DownloadCount: 100},
+			{Name: "empty.zip", DownloadCount: 0},
+		},
+		wantContains: []string{"file.zip", "empty.zip", "100", " 0"},
+	}}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := renderBarChart(tt.assets)
+			if tt.wantEmpty {
+				assert.Empty(t, got)
+			} else {
+				for _, s := range tt.wantContains {
+					assert.Contains(t, got, s)
+				}
+			}
 		})
 	}
 }

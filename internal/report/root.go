@@ -3,17 +3,16 @@ package report
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/MakeNowJust/heredoc/v2"
+	tea "github.com/charmbracelet/bubbletea"
 	cliapi "github.com/cli/cli/v2/api"
 	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/cli/go-gh/v2/pkg/repository"
-	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 )
 
 func NewCmdRoot(version string) *cobra.Command {
@@ -44,7 +43,7 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			contents, err := Run(&RunOptions{
+			data, err := FetchRelease(&RunOptions{
 				Repo:       repo,
 				Tag:        tag,
 				HTTPClient: ghClient,
@@ -53,9 +52,10 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			pterm.DefaultBox.Println(strings.Join(contents, "\n"))
-
-			return nil
+			m := newModel(data)
+			p := tea.NewProgram(m, tea.WithOutput(os.Stdout), tea.WithInput(nil))
+			_, err = p.Run()
+			return err
 		},
 	}
 
@@ -80,7 +80,8 @@ type RunOptions struct {
 	HTTPClient *http.Client
 }
 
-func Run(opts *RunOptions) ([]string, error) {
+// FetchRelease retrieves release data from the GitHub API.
+func FetchRelease(opts *RunOptions) (*ReleaseData, error) {
 	repo := opts.Repo
 	var url string
 
@@ -95,43 +96,30 @@ func Run(opts *RunOptions) ([]string, error) {
 	var response shared.Release
 	err := ghClient.REST(repo.RepoHost(), "GET", url, nil, &response)
 	if err != nil {
-		return []string{}, err
+		return nil, err
 	}
 
-	total := 0
-	bars := pterm.Bars{}
+	data := &ReleaseData{
+		RepoFullName: repo.RepoFullName(),
+		TagName:      response.TagName,
+		PublishedAt:  response.PublishedAt,
+		URL:          response.URL,
+		Assets:       []AssetData{},
+		TotalCount:   0,
+	}
+
 	for _, asset := range response.Assets {
 		// TODO: make --exclude a configurable option
 		if strings.Contains(strings.ToLower(asset.Name), "checksums") || strings.Contains(strings.ToLower(asset.Name), "sha256sums") {
 			continue
 		}
 
-		total += asset.DownloadCount
-		bars = append(bars, pterm.Bar{
-			Label: asset.Name,
-			Value: asset.DownloadCount,
+		data.TotalCount += asset.DownloadCount
+		data.Assets = append(data.Assets, AssetData{
+			Name:          asset.Name,
+			DownloadCount: asset.DownloadCount,
 		})
 	}
 
-	chart, err := pterm.DefaultBarChart.WithHorizontal().WithBars(bars).WithShowValue().Srender()
-	if err != nil {
-		return []string{}, err
-	}
-
-	if len(response.Assets) == 0 {
-		chart = "No release assets\n"
-	}
-
-	title := fmt.Sprintf("%s %s", repo.RepoFullName(), response.TagName)
-	p := message.NewPrinter(language.English)
-	formattedTotal := p.Sprintf("%d", total)
-	emphasized := pterm.NewStyle(pterm.FgLightMagenta, pterm.BgBlack, pterm.Bold)
-
-	return []string{
-		emphasized.Sprintln(title),
-		fmt.Sprintf("Published %s", response.PublishedAt),
-		pterm.NewStyle(pterm.FgBlue, pterm.Bold, pterm.Underscore).Sprintln(response.URL),
-		chart,
-		pterm.LightMagenta(formattedTotal) + " downloads",
-	}, nil
+	return data, nil
 }
