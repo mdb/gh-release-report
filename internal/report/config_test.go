@@ -3,12 +3,12 @@ package report
 import (
 	"testing"
 
-	"github.com/cli/go-gh/pkg/auth"
+	"github.com/cli/go-gh/v2/pkg/auth"
 )
 
-func TestConfig_AuthToken(t *testing.T) {
+func TestConfig_ActiveToken(t *testing.T) {
 	c := &Config{}
-	token, _ := c.AuthToken("foo.com")
+	token, _ := c.ActiveToken("foo.com")
 	token2, _ := auth.TokenForHost("foo.com")
 
 	if token != token2 {

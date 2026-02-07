@@ -1,8 +1,8 @@
 package report
 
 import (
-	"github.com/cli/go-gh/pkg/auth"
-	"github.com/cli/go-gh/pkg/config"
+	"github.com/cli/go-gh/v2/pkg/auth"
+	"github.com/cli/go-gh/v2/pkg/config"
 )
 
 // Conf implements the cliapi tokenGetter interface.
@@ -14,8 +14,8 @@ type Config struct {
 	*config.Config
 }
 
-// AuthToken implements the cliapi tokenGetter interface
+// ActiveToken implements the cliapi tokenGetter interface
 // by providing a method for retrieving the auth token.
-func (c *Config) AuthToken(hostname string) (string, string) {
+func (c *Config) ActiveToken(hostname string) (string, string) {
 	return auth.TokenForHost(hostname)
 }
