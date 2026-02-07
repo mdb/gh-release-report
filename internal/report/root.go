@@ -5,10 +5,11 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/MakeNowJust/heredoc"
+	"github.com/MakeNowJust/heredoc/v2"
 	cliapi "github.com/cli/cli/v2/api"
 	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
-	gh "github.com/cli/go-gh"
+	ghapi "github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
 	"golang.org/x/text/language"
@@ -38,9 +39,10 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
-				Config: &Config{},
-			})
+			ghClient, err := ghapi.DefaultHTTPClient()
+			if err != nil {
+				return err
+			}
 
 			contents, err := Run(&RunOptions{
 				Repo:       repo,
@@ -58,9 +60,9 @@ func NewCmdRoot(version string) *cobra.Command {
 	}
 
 	defaultRepo := ""
-	currentRepo, _ := gh.CurrentRepository()
-	if currentRepo != nil {
-		defaultRepo = fmt.Sprintf("%s/%s/%s", currentRepo.Host(), currentRepo.Owner(), currentRepo.Name())
+	currentRepo, err := repository.Current()
+	if err == nil {
+		defaultRepo = fmt.Sprintf("%s/%s/%s", currentRepo.Host, currentRepo.Owner, currentRepo.Name)
 	}
 
 	var repo string
