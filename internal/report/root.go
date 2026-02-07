@@ -8,6 +8,7 @@ import (
 	"github.com/MakeNowJust/heredoc"
 	cliapi "github.com/cli/cli/v2/api"
 	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
+	ghapi "github.com/cli/go-gh/v2/pkg/api"
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -38,9 +39,10 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			ghClient, _ := cliapi.NewHTTPClient(cliapi.HTTPClientOptions{
-				Config: &Config{},
-			})
+			ghClient, err := ghapi.DefaultHTTPClient()
+			if err != nil {
+				return err
+			}
 
 			contents, err := Run(&RunOptions{
 				Repo:       repo,
