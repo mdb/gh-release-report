@@ -81,7 +81,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View renders the model content wrapped in a box.
 func (m model) View() string {
-	return boxStyle.Render(m.content)
+	return boxStyle.Render(m.content) + "\n"
 }
 
 // renderContent builds the full display string from release data.
