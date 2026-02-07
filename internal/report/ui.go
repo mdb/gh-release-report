@@ -32,11 +32,13 @@ var (
 	titleStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("13")).
 			Background(lipgloss.Color("0")).
+			MarginBottom(1).
 			Bold(true)
 
 	urlStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("12")).
 			Bold(true).
+			MarginBottom(1).
 			Underline(true)
 
 	barStyle = lipgloss.NewStyle().
@@ -46,6 +48,7 @@ var (
 			Foreground(lipgloss.Color("14"))
 
 	totalStyle = lipgloss.NewStyle().
+			MarginTop(1).
 			Foreground(lipgloss.Color("13"))
 
 	boxStyle = lipgloss.NewStyle().
@@ -133,7 +136,7 @@ func renderBarChart(assets []AssetData) string {
 	}
 
 	// Build bars
-	const maxBarWidth = 50
+	const maxBarWidth = 75
 	var lines []string
 	for _, asset := range assets {
 		// Calculate bar width proportionally
