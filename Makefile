@@ -1,6 +1,6 @@
 SOURCE=./...
 GOFMT_FILES?=$$(find . -type f -name '*.go')
-VERSION?=0.0.1
+VERSION?=0.0.2
 NAME=gh-release-report
 GORELEASER=go run github.com/goreleaser/goreleaser/v2@v2.13.3
 
@@ -52,10 +52,9 @@ release:
 		--clean
 .PHONY: release
 
-# TODO: dynamically set architecture, which is currently hard-coded to amd64
 install:
 	mkdir -p ~/.local/share/gh/extensions/$(NAME)
-	cp dist/$(NAME)_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_amd64*/$(NAME) ~/.local/share/gh/extensions/$(NAME)/
+	cp dist/$(NAME)_$(shell echo $(shell uname) | tr '[:upper:]' '[:lower:]')_$(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')*/$(NAME) ~/.local/share/gh/extensions/$(NAME)/
 .PHONY: install
 
 demo:
