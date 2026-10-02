@@ -1,14 +1,15 @@
 package report
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/MakeNowJust/heredoc/v2"
-	cliapi "github.com/cli/cli/v2/api"
-	shared "github.com/cli/cli/v2/pkg/cmd/release/shared"
 	ghapi "github.com/cli/go-gh/v2/pkg/api"
+	"github.com/cli/go-gh/v2/pkg/auth"
 	"github.com/cli/go-gh/v2/pkg/repository"
 	"github.com/pterm/pterm"
 	"github.com/spf13/cobra"
@@ -39,7 +40,7 @@ func NewCmdRoot(version string) *cobra.Command {
 				return err
 			}
 
-			ghClient, err := ghapi.DefaultHTTPClient()
+			httpClient, err := ghapi.NewHTTPClient(ghapi.ClientOptions{Host: repo.RepoHost()})
 			if err != nil {
 				return err
 			}
@@ -47,7 +48,7 @@ func NewCmdRoot(version string) *cobra.Command {
 			contents, err := Run(&RunOptions{
 				Repo:       repo,
 				Tag:        tag,
-				HTTPClient: ghClient,
+				HTTPClient: httpClient,
 			})
 			if err != nil {
 				return err
@@ -80,6 +81,18 @@ type RunOptions struct {
 	HTTPClient *http.Client
 }
 
+type release struct {
+	TagName     string         `json:"tag_name"`
+	URL         string         `json:"html_url"`
+	PublishedAt *time.Time     `json:"published_at"`
+	Assets      []releaseAsset `json:"assets"`
+}
+
+type releaseAsset struct {
+	Name          string `json:"name"`
+	DownloadCount int    `json:"download_count"`
+}
+
 func Run(opts *RunOptions) ([]string, error) {
 	repo := opts.Repo
 	var url string
@@ -91,9 +104,7 @@ func Run(opts *RunOptions) ([]string, error) {
 		url = fmt.Sprintf("repos/%s/releases/tags/%s", repo.RepoFullName(), tag)
 	}
 
-	ghClient := cliapi.NewClientFromHTTP(opts.HTTPClient)
-	var response shared.Release
-	err := ghClient.REST(repo.RepoHost(), "GET", url, nil, &response)
+	response, err := fetchRelease(opts.HTTPClient, restURL(repo.RepoHost(), url))
 	if err != nil {
 		return []string{}, err
 	}
@@ -134,4 +145,33 @@ func Run(opts *RunOptions) ([]string, error) {
 		chart,
 		pterm.LightMagenta(formattedTotal) + " downloads",
 	}, nil
+}
+
+func fetchRelease(client *http.Client, url string) (*release, error) {
+	resp, err := client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return nil, ghapi.HandleHTTPError(resp)
+	}
+
+	var r release
+	if err := json.NewDecoder(resp.Body).Decode(&r); err != nil {
+		return nil, err
+	}
+
+	return &r, nil
+}
+
+// restURL returns the REST API URL for path on host. GitHub Enterprise Server
+// serves the API under /api/v3/; github.com and GHE.com use an api. subdomain.
+func restURL(host, path string) string {
+	host = auth.NormalizeHostname(host)
+	if auth.IsEnterprise(host) {
+		return fmt.Sprintf("https://%s/api/v3/%s", host, path)
+	}
+	return fmt.Sprintf("https://api.%s/%s", host, path)
 }
